@@ -1,35 +1,21 @@
-resource "proxmox_vm_qemu" "kube-master1" {
+resource "proxmox_vm_qemu" "kube-master" {
+  for_each = var.masters
+
+  name        = each.key
+  target_node = "proxmox"
+
   depends_on = [
-    "proxmox_lxc.gateway1",
-    "proxmox_lxc.gateway2"
+    proxmox_lxc.gateway
   ]
 }
 
-resource "proxmox_vm_qemu" "kube-master2" {
+resource "proxmox_vm_qemu" "kube-worker" {
+  for_each = var.workers
+
+  name        = each.key
+  target_node = "proxmox"
+
   depends_on = [
-    "proxmox_lxc.gateway1",
-    "proxmox_lxc.gateway2"
+    proxmox_vm_qemu.kube-master
   ]
 }
-
-resource "proxmox_vm_qemu" "kube-worker1" {
-  depends_on = [
-    "proxmox_vm_qemu.master1",
-    "proxmox_vm_qemu.master2"
-  ]
-}
-
-resource "proxmox_vm_qemu" "kube-worker2" {
-  depends_on = [
-    "proxmox_vm_qemu.master1",
-    "proxmox_vm_qemu.master2"
-  ]
-}
-
-resource "proxmox_vm_qemu" "kube-worker3" {
-  depends_on = [
-    "proxmox_vm_qemu.master1",
-    "proxmox_vm_qemu.master2"
-  ]
-}
-
