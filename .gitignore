@@ -2,4 +2,4 @@
 crash.log
 *.tfstate
 *.tfstate.*
-id_rsa
+.terraform_secret.yaml
