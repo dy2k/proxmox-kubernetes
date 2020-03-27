@@ -37,7 +37,8 @@ variable "masters" {
       gw      = "10.0.0.1"
       macaddr = "6E:DE:EE:62:37:1D"
       ip      = "10.0.0.11"
-      memory  = 2048
+      memory  = 3072
+      disk    = "80G"
     },
     kube-master2 = {
       cidr    = "10.0.0.12/24"
@@ -45,7 +46,8 @@ variable "masters" {
       gw      = "10.0.0.1"
       macaddr = "2E:6E:FC:F0:A1:CB"
       ip      = "10.0.0.12"
-      memory  = 2048
+      memory  = 3072
+      disk    = "80G"
     }
   }
 }
@@ -59,7 +61,8 @@ variable "workers" {
       gw      = "10.0.0.1"
       macaddr = "62:0E:E4:E4:7B:46"
       ip      = "10.0.0.21"
-      memory  = 4096
+      memory  = 5120
+      disk    = "80G"
     },
     kube-worker2 = {
       cidr    = "10.0.0.22/24"
@@ -67,7 +70,8 @@ variable "workers" {
       gw      = "10.0.0.1"
       macaddr = "5A:B1:D9:D1:E6:35"
       ip      = "10.0.0.22"
-      memory  = 4096
+      memory  = 5120
+      disk    = "80G"
     },
     kube-worker3 = {
       cidr    = "10.0.0.23/24"
@@ -75,7 +79,8 @@ variable "workers" {
       gw      = "10.0.0.1"
       macaddr = "22:92:5D:6B:7F:A1"
       ip      = "10.0.0.23"
-      memory  = 4096
+      memory  = 5120
+      disk    = "80G"
     },
   }
 }

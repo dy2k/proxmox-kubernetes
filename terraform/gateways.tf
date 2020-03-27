@@ -35,7 +35,7 @@ resource "proxmox_lxc" "gateway" {
   start = true                                      # comment after creation
   #   start        = false # un-comment after creation
   unprivileged = true
-  target_node  = "proxmox"
+  target_node  = "sd-51798"
 
   connection {
     host                = each.value[0].ip

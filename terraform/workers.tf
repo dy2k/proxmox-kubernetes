@@ -1,10 +1,10 @@
-resource "proxmox_vm_qemu" "kube-cluster" {
-  for_each = var.masters
+resource "proxmox_vm_qemu" "kube-worker" {
+  for_each = var.workers
 
   name        = each.key
-  target_node = "proxmox"
+  target_node = "sd-51798"
   agent       = 1
-  iso         = "local:iso/ubuntu-18.04.3-live-server-amd64.iso"
+  clone       = "ci-ubuntu-template"
   memory      = each.value.memory
   cores       = each.value.cores
   vga {
@@ -14,7 +14,7 @@ resource "proxmox_vm_qemu" "kube-cluster" {
     id       = 0
     model    = "virtio"
     macaddr  = each.value.macaddr
-    bridge   = "vmbr1"
+    bridge   = "vmbr0"
     firewall = true
   }
   disk {
@@ -22,17 +22,18 @@ resource "proxmox_vm_qemu" "kube-cluster" {
     type         = "scsi"
     storage      = "local"
     storage_type = "lvm"
-    size         = "80G"
+    size         = each.value.disk
     format       = "qcow2"
   }
   serial {
     id   = 0
     type = "socket"
   }
-  os_type      = "ubuntu"
+  bootdisk     = "scsi0"
+  scsihw       = "virtio-scsi-pci"
+  os_type      = "cloud-init"
   ipconfig0    = "ip=${each.value.cidr},gw=${each.value.gw}"
   ciuser       = "root"
-  cipassword   = random_password.ubuntu_root.result
   searchdomain = "sd-51798.dy2k.io"
   nameserver   = "10.0.0.1"
   sshkeys = join("", [
@@ -41,7 +42,7 @@ resource "proxmox_vm_qemu" "kube-cluster" {
   ])
 
   depends_on = [
-    proxmox_lxc.gateway
+    proxmox_vm_qemu.kube-master
   ]
 
   connection {

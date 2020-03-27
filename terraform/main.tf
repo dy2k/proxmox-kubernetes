@@ -1,3 +1,12 @@
+terraform {
+  backend "s3" {
+    bucket  = "proxmox-kubernetes"
+    key     = "terraform/terraform.tfstate"
+    region  = "ap-southeast-1"
+    profile = "dy2k"
+  }
+}
+
 provider "proxmox" {
   pm_tls_insecure = true
   pm_api_url      = yamldecode(data.local_file.secrets.content).pm_api_url
