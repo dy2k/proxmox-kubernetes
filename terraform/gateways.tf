@@ -1,7 +1,7 @@
 resource "proxmox_lxc" "gateway" {
   for_each = var.gateways
 
-  ostemplate = "local:vztmpl/ubuntu-18.04-standard_18.04.1-1_amd64.tar.gz" # comment after creation
+  ostemplate = "local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz" # comment after creation
   #   ostype     = "ubuntu" # un-comment after creation
   cores      = 2
   hostname   = each.key
@@ -48,12 +48,12 @@ resource "proxmox_lxc" "gateway" {
     inline = [
       "ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N \"\"",
       "echo \"${tls_private_key.ubuntu_root.private_key_pem}\" > /root/.ssh/id_rsa",
-      "echo \"${tls_private_key.ubuntu_root.public_key_pem}\" > /root/.ssh/id_rsa.pub",
+      "echo \"${tls_private_key.ubuntu_root.public_key_openssh}\" > /root/.ssh/id_rsa.pub",
       "echo \"${tls_private_key.ubuntu_root.public_key_openssh}\" >> /root/.ssh/authorized_keys",
       "adduser --disabled-password --gecos \"\" dyung && usermod -aG sudo dyung",
       "su - dyung -c 'ssh-keygen -b 2048 -t rsa -f /home/dyung/.ssh/id_rsa -q -N \"\"'",
       "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.private_key_pem}\" > /home/dyung/.ssh/id_rsa'",
-      "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_pem}\" > /home/dyung/.ssh/id_rsa.pub'",
+      "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_openssh}\" > /home/dyung/.ssh/id_rsa.pub'",
       "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_openssh}\" > /home/dyung/.ssh/authorized_keys'",
       "su - dyung -c 'echo \"${data.tls_public_key.dy2k.public_key_openssh}\" >> /home/dyung/.ssh/authorized_keys'",
       "chmod 700 /home/dyung/.ssh/authorized_keys"

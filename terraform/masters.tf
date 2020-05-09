@@ -8,7 +8,7 @@ resource "proxmox_vm_qemu" "kube-master" {
   memory      = each.value.memory
   cores       = each.value.cores
   vga {
-    type = "std"
+    type = "qxl"
   }
   network {
     id       = 0
@@ -56,12 +56,13 @@ resource "proxmox_vm_qemu" "kube-master" {
     inline = [
       "ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N \"\"",
       "echo \"${tls_private_key.ubuntu_root.private_key_pem}\" > /root/.ssh/id_rsa",
-      "echo \"${tls_private_key.ubuntu_root.public_key_pem}\" > /root/.ssh/id_rsa.pub",
+      "echo \"${tls_private_key.ubuntu_root.public_key_openssh}\" > /root/.ssh/id_rsa.pub",
       "echo \"${tls_private_key.ubuntu_root.public_key_openssh}\" >> /root/.ssh/authorized_keys",
       "adduser --disabled-password --gecos \"\" dyung && usermod -aG sudo dyung",
+      "echo 'dyung ALL=(ALL:ALL) NOPASSWD:ALL' > /etc/sudoers.d/dyung && chmod 440 /etc/sudoers.d/dyung",
       "su - dyung -c 'ssh-keygen -b 2048 -t rsa -f /home/dyung/.ssh/id_rsa -q -N \"\"'",
       "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.private_key_pem}\" > /home/dyung/.ssh/id_rsa'",
-      "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_pem}\" > /home/dyung/.ssh/id_rsa.pub'",
+      "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_openssh}\" > /home/dyung/.ssh/id_rsa.pub'",
       "su - dyung -c 'echo \"${tls_private_key.ubuntu_dyung.public_key_openssh}\" > /home/dyung/.ssh/authorized_keys'",
       "su - dyung -c 'echo \"${data.tls_public_key.dy2k.public_key_openssh}\" >> /home/dyung/.ssh/authorized_keys'",
       "chmod 700 /home/dyung/.ssh/authorized_keys"
