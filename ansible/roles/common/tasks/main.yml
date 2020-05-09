@@ -1,0 +1,4 @@
+---
+- name: Disable IPv6
+  include_role:
+    name: ypsman.ipv6_disable

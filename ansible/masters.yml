@@ -1,0 +1,4 @@
+---
+- hosts: masters
+  roles:
+    - common

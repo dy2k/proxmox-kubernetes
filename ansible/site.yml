@@ -1,0 +1,3 @@
+---
+- import_playbook: masters.yml
+- import_playbook: workers.yml

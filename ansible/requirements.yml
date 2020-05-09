@@ -1,0 +1,3 @@
+---
+roles:
+  - name: ypsman.ipv6_disable
