@@ -3,10 +3,9 @@ resource "proxmox_lxc" "gateway" {
 
   ostemplate = "local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz" # comment after creation
   #   ostype     = "ubuntu" # un-comment after creation
-  cores      = 2
-  hostname   = each.key
-  memory     = 2048
-  nameserver = "10.0.0.1"
+  cores    = 2
+  hostname = each.key
+  memory   = 2048
   dynamic "network" {
     for_each = each.value
 

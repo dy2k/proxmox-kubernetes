@@ -20,7 +20,7 @@ variable "gateways" {
       {
         cidr   = "10.0.0.2/24"
         name   = "eth0"
-        gw     = ""
+        gw     = "10.0.0.1"
         hwaddr = "E6:48:8F:0C:D0:57"
         ip     = "10.0.0.2"
       }
