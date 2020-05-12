@@ -1,4 +1,24 @@
 ---
+- name: Perform system upgrade
+  apt:
+    update_cache: yes
+    upgrade: yes
+
+- name: Install QEMU Guest Agent
+  apt:
+    name: qemu-guest-agent
+    state: latest
+
 - name: Disable IPv6
   include_role:
     name: ypsman.ipv6_disable
+  register: ipv6_disable
+
+- name: Reboot server
+  reboot:
+    reboot_timeout: 3600
+  when: ipv6_disable.changed == true
+
+- name: Set timezone
+  timezone:
+    name: Asia/Hong_Kong

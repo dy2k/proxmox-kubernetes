@@ -1,0 +1,48 @@
+---
+- name: Allow OpenSSH in ufw
+  ufw:
+    rule: allow
+    name: OpenSSH
+  when: nat_server_ip in ansible_all_ipv4_addresses
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  when: nat_server_ip in ansible_all_ipv4_addresses
+
+- name: Change forward policy
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY="DROP"'
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+    backrefs: yes
+  when: nat_server_ip in ansible_all_ipv4_addresses
+  notify:
+    - Restart ufw
+
+- name: Set sysctl to forward
+  lineinfile:
+    path: /etc/ufw/sysctl.conf
+    regexp: "^#net/ipv4/ip_forward=1"
+    line: "net/ipv4/ip_forward=1"
+    backrefs: yes
+  when: nat_server_ip in ansible_all_ipv4_addresses
+  notify:
+    - Restart ufw
+
+- name: Add NAT to ufw
+  blockinfile:
+    path: /etc/ufw/before.rules
+    block: |
+      # NAT table rules
+      *nat
+      :POSTROUTING ACCEPT [0:0]
+      # Forward traffic through eth0 - Change to match you out-interface
+      -A POSTROUTING -s {{ nat_cidr }} -o {{ nat_interface }} -j MASQUERADE
+      # don't delete the 'COMMIT' line or these nat table rules won't
+      # be processed
+      COMMIT
+    insertbefore: "^# Don't delete these required lines"
+  when: nat_server_ip in ansible_all_ipv4_addresses
+  notify:
+    - Restart ufw

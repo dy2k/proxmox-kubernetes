@@ -1,0 +1,7 @@
+---
+- name: Set up NAT gateway
+  include_tasks: network.yml
+
+- name: Set up Bind servers
+  include_role:
+    name: bertvv.bind
