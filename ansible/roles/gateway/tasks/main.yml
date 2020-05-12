@@ -2,6 +2,5 @@
 - name: Set up NAT gateway
   include_tasks: network.yml
 
-- name: Set up Bind servers
-  include_role:
-    name: bertvv.bind
+- name: Set up DNS servers
+  include_tasks: bind.yml

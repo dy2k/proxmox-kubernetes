@@ -1,0 +1,10 @@
+---
+- name: Set up Bind servers
+  include_role:
+    name: bertvv.bind
+
+- name: Allow Bind in ufw
+  ufw:
+    rule: allow
+    name: Bind9
+    src: 10.0.0.0/24
