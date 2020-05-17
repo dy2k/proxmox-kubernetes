@@ -1,0 +1,14 @@
+---
+- name: Restart ssh
+  service:
+    name: ssh
+    state: restarted
+    enabled: yes
+
+- name: Restart postfix
+  service:
+    name: postfix
+    state: restarted
+
+- name: Reload sysctl
+  command: sysctl --system

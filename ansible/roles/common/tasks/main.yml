@@ -9,16 +9,85 @@
     name: qemu-guest-agent
     state: latest
 
+- name: Set timezone
+  timezone:
+    name: Asia/Hong_Kong
+
+- name: Disable SSH IPv6
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#ListenAddress 0.0.0.0"
+      line: "ListenAddress 0.0.0.0"
+      backrefs: yes
+  notify:
+    - Restart ssh
+
+- name: Disable SSH password auth
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#PasswordAuthentication yes"
+    line: "PasswordAuthentication no"
+    backrefs: yes
+  notify:
+    - Restart ssh
+
 - name: Disable IPv6
   include_role:
     name: ypsman.ipv6_disable
   register: ipv6_disable
 
+- name: Check if Postfix config exists
+  stat:
+    path: /etc/postfix/main.cf
+  register: postfix_config
+
+- name: Disable Postfix IPv6
+  lineinfile:
+    path: /etc/postfix/main.cf
+    line: inet_protocols = ipv4
+  notify:
+    - Restart postfix
+  when: postfix_config.stat.exists
+
+- name: Check swap summary
+  command: "swapon -s || true"
+  register: swap_summary
+  changed_when: False
+
+- name: Disable swap
+  command: "swapoff -a"
+  when: swap_summary.stdout != "" and "gateways" not in group_names
+
+- name: Remove swap file
+  replace:
+    path: /etc/fstab
+    regex: "^([^#].*?\\sswap\\s+sw\\s+.*)$"
+    replace: '# \1'
+  register: swap_remove
+  when: swap_summary.stdout != "" and "gateways" not in group_names
+
+- name: Check if br_netfilter module loaded
+  shell: lsmod | grep br_netfilter | wc -l || true
+  register: lsmod_br_netfilter
+  changed_when: False
+  when: '"gateways" not in group_names'
+
+- name: Load br_netfilter module explicitly
+  command: modprobe br_netfilter
+  when: lsmod_br_netfilter|int > 0 and "gateways" not in group_names
+
+- name: Enable bridged traffic in iptables
+  template:
+    src: 10-iptables-bridged.conf.j2
+    dest: /etc/sysctl.d/10-iptables-bridged.conf
+  when: '"gateways" not in group_names'
+  notify:
+    - Reload sysctl
+
+- name: Flush handlers
+  meta: flush_handlers
+
 - name: Reboot server
   reboot:
     reboot_timeout: 3600
-  when: ipv6_disable.changed == true
-
-- name: Set timezone
-  timezone:
-    name: Asia/Hong_Kong
+  when: ipv6_disable.changed or swap_remove.changed
