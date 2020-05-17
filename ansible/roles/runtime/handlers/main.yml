@@ -1,0 +1,10 @@
+---
+- name: Refresh APT cache
+  apt:
+    update_cache: yes
+
+- name: Restart Docker
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,50 @@
+---
+haproxy_firewalld: false
+haproxy_selinux: false
+
+haproxy_default_mode: http
+
+haproxy_stats_address: 10.0.0.10
+haproxy_stats_port: 1080
+haproxy_stats_user: admin
+haproxy_stats_password: "{{ loadbalancer_haproxy_password }}"
+haproxy_stats_uri: /admin?stats
+haproxy_stats_options:
+  - refresh 5s
+
+haproxy_frontend:
+  - kube_apiserver_frontend:
+      mode: tcp
+      bind: 10.0.0.10:6443
+      options:
+        - tcplog
+      default_backend: kube_apiserver_backend
+
+haproxy_backend:
+  - kube_apiserver_backend:
+      mode: tcp
+      method: roundrobin
+      servers:
+        - kube-master-1 10.0.0.11:6443 check
+        - kube-master-2 10.0.0.12:6443 check
+        - kube-master-3 10.0.0.13:6443 check
+
+keepalived_scripts:
+  haproxy_check_script:
+    check_script: killall -0 haproxy
+    interval: 3
+    fall: 10
+    rise: 2
+    weight: -2
+
+keepalived_instances:
+  internal:
+    interface: eth0
+    state: MASTER
+    virtual_router_id: 1
+    priority: 100
+    authentication_password: "{{ loadbalancer_keepalived_password }}"
+    track_scripts:
+      - haproxy_check_script
+    vips:
+      - 10.0.0.10

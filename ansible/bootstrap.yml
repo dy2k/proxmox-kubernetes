@@ -1,0 +1,17 @@
+---
+- hosts: gateways
+  roles:
+    - gateway
+    - named
+    - loadbalancer
+
+- hosts: all
+  roles:
+    - common
+
+- hosts:
+    - masters
+    - workers
+  roles:
+    - runtime
+    - kubeadm

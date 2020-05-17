@@ -1,0 +1,3 @@
+---
+- name: Install container runtime
+  include_tasks: "{{ runtime_type }}.yml"

@@ -1,4 +1,4 @@
 ---
-- import_playbook: gateways.yml
+- import_playbook: bootstrap.yml
 - import_playbook: masters.yml
 - import_playbook: workers.yml

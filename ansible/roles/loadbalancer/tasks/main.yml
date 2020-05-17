@@ -1,0 +1,11 @@
+---
+- name: Include secret vars  
+  include_vars: .ansible_secret.yml
+
+- name: Set up haproxy
+  include_role:
+    name: uoi-io.haproxy
+
+- name: Set up keepalived
+  include_role:
+    name: evrardjp.keepalived

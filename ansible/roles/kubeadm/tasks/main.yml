@@ -1,0 +1,30 @@
+---
+- name: Install kubeadm dependencies
+  apt:
+    name:
+      - apt-transport-https
+      - curl
+
+- name: Add Kubernetes official GPG key
+  apt_key:
+    id: "{{ kubeadm_apt_key_id }}"
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: Set up Kubernetes APT repository
+  apt_repository:
+    repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+    filename: /etc/apt/sources.list.d/kubernetes.list
+
+- name: Install kubeadm executables
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+
+- name: "Mark kubeadm executables as hold"
+  command: "apt-mark hold {{item}}"
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
