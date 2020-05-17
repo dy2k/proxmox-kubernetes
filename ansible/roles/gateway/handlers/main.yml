@@ -3,4 +3,3 @@
   service:
     name: ufw
     state: restarted
-    enabled: yes

@@ -1,38 +1,4 @@
 ---
 nat_cidr: 10.0.0.0/24
-nat_interface: eth0
+nat_interface: eth1
 nat_server_ip: 10.0.0.1
-
-bind_acls:
-  - name: trusted
-    match_list:
-      - 10.0.0.0/24
-bind_allow_query: ['trusted']
-bind_forwarders: ['62.210.16.6', '62.210.16.7']
-bind_listen_ipv4:
-  - 10.0.0.1
-bind_recursion: true
-bind_zone_domains:
-  - name: sd-51798.dy2k.io
-    networks:
-      - '10.0.0'
-    name_servers:
-      - ns1.sd-51798.dy2k.io.
-      - ns2.sd-51798.dy2k.io.
-    hostmaster_email: admin
-    hosts:
-      - name: ns1
-        ip: 10.0.0.1
-      - name: ns2
-        ip: 10.0.0.2
-      - name: k8s-master-1
-        ip: 10.0.0.11
-      - name: k8s-master-2
-        ip: 10.0.0.12
-      - name: k8s-worker-1
-        ip: 10.0.0.21
-      - name: k8s-worker-2
-        ip: 10.0.0.22
-      - name: k8s-worker-3
-        ip: 10.0.0.23
-bind_zone_master_server_ip: 10.0.0.1
