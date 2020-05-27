@@ -3,6 +3,7 @@
   apt:
     update_cache: yes
     upgrade: yes
+  register: system_upgrade
 
 - name: Install QEMU Guest Agent
   apt:
@@ -89,5 +90,4 @@
 
 - name: Reboot server
   reboot:
-    reboot_timeout: 3600
-  when: ipv6_disable.changed or swap_remove.changed
+  when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed) and "gateways" not in group_names
