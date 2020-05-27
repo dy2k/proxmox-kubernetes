@@ -1,0 +1,7 @@
+---
+- name: Mark kubeadm executables as hold
+  command: "apt-mark hold {{item}}"
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
