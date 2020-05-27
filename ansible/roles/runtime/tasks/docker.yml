@@ -35,13 +35,22 @@
       - docker-ce-cli
       - containerd.io
 
+- name: Check Docker systemd directory
+  stat:
+   path: /etc/systemd/system/docker.service.d
+  register: runtime_docker_systemd
+
 - name: Create Docker systemd directory
   file:
     path: /etc/systemd/system/docker.service.d
     state: directory
+  when: runtime_docker_systemd.stat.exists == false
 
 - name: Set up Docker daemon
   template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
   notify: Restart Docker
+
+- name: Flush handlers
+  meta: flush_handlers
