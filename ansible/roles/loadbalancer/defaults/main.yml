@@ -1,0 +1,3 @@
+---
+loadbalancer_haproxy_address: 10.0.0.10
+loadbalancer_haproxy_port: 6443

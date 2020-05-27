@@ -15,7 +15,8 @@ haproxy_stats_options:
 haproxy_frontend:
   - kube_apiserver_frontend:
       mode: tcp
-      bind: 10.0.0.10:6443
+      binds:
+        - '{{ loadbalancer_haproxy_address }}:{{ loadbalancer_haproxy_port }}'
       options:
         - tcplog
       default_backend: kube_apiserver_backend
@@ -25,9 +26,9 @@ haproxy_backend:
       mode: tcp
       method: roundrobin
       servers:
-        - kube-master-1 10.0.0.11:6443 check
-        - kube-master-2 10.0.0.12:6443 check
-        - kube-master-3 10.0.0.13:6443 check
+        - kube-master1 10.0.0.11:6443 check
+        - kube-master2 10.0.0.12:6443 check
+        - kube-master3 10.0.0.13:6443 check
 
 keepalived_scripts:
   haproxy_check_script:
