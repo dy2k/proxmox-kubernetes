@@ -1,17 +1,29 @@
 ---
 - hosts: gateways
   roles:
-    - gateway
-    - named
-    - loadbalancer
+    - role: gateway
+      tags:
+        - gateway
+    - role: named
+      tags:
+        - named
+    - role: loadbalancer
+      tags:
+        - loadbalancer
 
 - hosts: all
   roles:
-    - common
+    - role: common
+      tags:
+        - common
 
 - hosts:
     - masters
     - workers
   roles:
-    - runtime
-    - kubeadm
+    - role: runtime
+      tags:
+        - runtime
+    - role: kubeadm
+      tags:
+        - kubeadm
