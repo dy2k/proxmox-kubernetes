@@ -18,17 +18,26 @@
 - name: Install kubeadm executables
   apt:
     name:
-      - kubelet
-      - kubeadm
-      - kubectl
+      - kubelet={{ kubeadm_version }}
+      - kubeadm={{ kubeadm_version }}
+      - kubectl={{ kubeadm_version }}
   notify: Mark kubeadm executables as hold
 
-- name: Check Kubernetes component statuses 
+- name: Check Kubernetes component statuses
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf 
+    KUBECONFIG: /etc/kubernetes/admin.conf
   shell: kubectl get componentstatuses 2>&1 | grep Healthy | wc -l || true
   register: kubeadm_components
   changed_when: False
+  when: inventory_hostname == groups["masters"][0]
+
+- name: Check kubernetes join statuses
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubectl get nodes -o wide | grep {{ inventory_hostname }} | tr -s ' ' | cut -d ' ' -f2 | wc -l || true
+  register: kubeadm_join_status
+  changed_when: False
+  delegate_to: '{{ groups["masters"][0] }}'
 
 - name: Register Kubernetes certificate key
   shell: kubeadm alpha certs certificate-key || true
@@ -36,41 +45,48 @@
   changed_when: False
   when: inventory_hostname == groups["masters"][0]
 
-- name: Init primary Kubernetes control plane
-  command: "kubeadm init --control-plane-endpoint {{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }} --pod-network-cidr {{ kubeadm_pod_network_cidr }} --upload-certs --certificate-key {{ kubeadm_certificate_key.stdout }}"
-  when: kubeadm_components.stdout|int < 1 and inventory_hostname == groups["masters"][0]
+- name: Set fact for certificate key
+  run_once: true
+  set_fact: kubeadm_certificate_key="{{ kubeadm_certificate_key.stdout }}"
+  when: inventory_hostname == groups["masters"][0]
 
-- name: Check Kubernetes network configurations
+- name: Check Kubernetes join token
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf 
-  shell: "kubectl get all -n kube-system 2>&1 | grep {{ kubeadm_cni_plugins.name }} | wc -l || true"
-  register: kubeadm_network
-  changed_when: False
-
-- name: Download network configurations
-  get_url: 
-    url: "{{ item.url }}"
-    dest: "{{ item.dest }}"
-    force: yes
-  loop: "{{ kubeadm_cni_plugins.sources }}"
-  when: kubeadm_network.stdout|int < 1 and inventory_hostname == groups["masters"][0]
-
-- name: Modify network configurations
-  command: "sed -i -e '{{ item.args }}' {{ item.file }}"
-  loop: "{{ kubeadm_cni_plugins.modifications }}"
-  when: kubeadm_network.stdout|int < 1 and kubeadm_cni_plugins.modifications is defined and kubeadm_cni_plugins.modifications|length > 0 and inventory_hostname == groups["masters"][0]
-
-- name: Apply network configurations
-  command: "kubectl apply -f {{ item.dest }}"
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf 
-  loop: "{{ kubeadm_cni_plugins.sources }}"
-  when: kubeadm_network.stdout|int < 1 and inventory_hostname == groups["masters"][0]
-
-- name: Register Kubernetes join token
-  shell: kubeadm token list | cut -d ' ' -f1 | sed -n '2p' || true
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubeadm token list | grep bootstrap | cut -d ' ' -f1 | head -n 1 || true
   register: kubeadm_join_token
   changed_when: False
+  when: inventory_hostname == groups["masters"][0]
+
+- name: Generate Kubernetes join token
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubeadm token generate
+  register: kubeadm_join_token_create
+  when: inventory_hostname == groups["masters"][0] and kubeadm_join_token.stdout == ''
+
+- name: Create Kubernetes join token
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubeadm token create 2>/dev/null || true
+  when: inventory_hostname == groups["masters"][0] and kubeadm_components.stdout|int >=1 and kubeadm_join_token.stdout == ''
+
+- name: Set fact for existing Kubernetes join token
+  run_once: true
+  set_fact: kubeadm_join_token="{{ kubeadm_join_token.stdout }}"
+  when: inventory_hostname == groups["masters"][0] and not kubeadm_join_token_create.changed
+
+- name: Set fact for created Kubernetes join token
+  run_once: true
+  set_fact: kubeadm_join_token="{{ kubeadm_join_token_create.stdout }}"
+  when: inventory_hostname == groups["masters"][0] and kubeadm_join_token_create.changed
+
+- name: Init primary Kubernetes control plane
+  command: "kubeadm init --control-plane-endpoint {{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }} --pod-network-cidr {{ kubeadm_pod_network_cidr }} --token {{ kubeadm_join_token }} --certificate-key {{ kubeadm_certificate_key }}"
+  when: inventory_hostname == groups["masters"][0] and kubeadm_components.stdout|int < 1
+
+- name: Generate kubeadm-certs secret
+  command: "kubeadm init phase upload-certs --upload-certs --certificate-key {{ kubeadm_certificate_key }}"
   when: inventory_hostname == groups["masters"][0]
 
 - name: Register Kubernetes discovery token ca cert hash
@@ -79,18 +95,76 @@
   changed_when: False
   when: inventory_hostname == groups["masters"][0]
 
-- name: Set facts for join command
-  when: inventory_hostname == groups["masters"][0]
+- name: Set fact for Kubernetes discovery token ca cert hash
   run_once: true
-  set_fact:
-    kubeadm_certificate_key: "{{ kubeadm_certificate_key.stdout }}"
-    kubeadm_join_token: "{{ kubeadm_join_token.stdout }}"   
-    kubeadm_discovery_token_ca_cert_hash: "{{ kubeadm_discovery_token_ca_cert_hash.stdout }}"
+  set_fact: kubeadm_discovery_token_ca_cert_hash="{{ kubeadm_discovery_token_ca_cert_hash.stdout }}"
+  when: inventory_hostname == groups["masters"][0]
+
+- name: Check Kubernetes network configurations
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: "kubectl get all -n kube-system 2>&1 | grep {{ kubeadm_cni_plugins.name }} | wc -l || true"
+  register: kubeadm_network
+  changed_when: False
+  when: inventory_hostname == groups["masters"][0]
+
+- name: Download network configurations
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    force: yes
+  loop: "{{ kubeadm_cni_plugins.sources }}"
+  when: inventory_hostname == groups["masters"][0] and kubeadm_network.stdout|int < 1
+
+- name: Modify network configurations
+  command: "sed -i -e '{{ item.args }}' {{ item.file }}"
+  loop: "{{ kubeadm_cni_plugins.modifications }}"
+  when: inventory_hostname == groups["masters"][0] and kubeadm_network.stdout|int < 1 and kubeadm_cni_plugins.modifications is defined and kubeadm_cni_plugins.modifications|length > 0
+
+- name: Apply network configurations
+  command: "kubectl apply -f {{ item.dest }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  loop: "{{ kubeadm_cni_plugins.sources }}"
+  when: inventory_hostname == groups["masters"][0] and kubeadm_network.stdout|int < 1
 
 - name: Join the rest of Kubernetes control plane nodes
-  command: "kubeadm join {{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }} --control-plane --token {{ kubeadm_join_token }} --discovery-token-ca-cert-hash sha256:{{ kubeadm_discovery_token_ca_cert_hash }} --certificate-key {{ kubeadm_certificate_key }}"
-  when: kubeadm_components.stdout|int < 1 and inventory_hostname != groups["gateways"][0] and "masters" in group_names
+  command: "kubeadm join --v=5 {{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }} --control-plane --token {{ kubeadm_join_token }} --discovery-token-ca-cert-hash sha256:{{ kubeadm_discovery_token_ca_cert_hash }} --certificate-key {{ kubeadm_certificate_key }}"
+  when: kubeadm_join_status.stdout|int < 1 and inventory_hostname != groups["masters"][0] and "masters" in group_names
 
 - name: Join the rest of Kubernetes worker nodes
   command: "kubeadm join {{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }} --token {{ kubeadm_join_token }} --discovery-token-ca-cert-hash sha256:{{ kubeadm_discovery_token_ca_cert_hash }}"
-  when: kubeadm_components.stdout|int < 1 and "workers" in group_names
+  when: kubeadm_join_status.stdout|int < 1 and "workers" in group_names
+
+- name: Check kubernetes join statuses
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  shell: kubectl get nodes -o wide | grep {{ inventory_hostname }} | tr -s ' ' | cut -d ' ' -f2 | wc -l || true
+  register: kubeadm_join_status
+  changed_when: False
+  delegate_to: '{{ groups["masters"][0] }}'
+
+- name: Ensure kube config directory exists
+  file:
+    path: /home/terraform/.kube
+    state: directory
+    owner: terraform
+    group: terraform
+
+- name: Copy admin.conf for Kubernetes control plane nodes
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/terraform/.kube/config
+    owner: terraform
+    group: terraform
+    remote_src: yes
+  when: kubeadm_join_status.stdout|int >= 1 and "masters" in group_names
+
+- name: Copy kubelet.conf for Kubernetes worker nodes
+  copy:
+    src: /etc/kubernetes/kubelet.conf
+    dest: /home/terraform/.kube/config
+    owner: terraform
+    group: terraform
+    remote_src: yes
+  when: kubeadm_join_status.stdout|int >= 1 and "workers" in group_names
