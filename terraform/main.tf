@@ -6,6 +6,13 @@ terraform {
     profile = "dy2k"
     encrypt = true
   }
+
+  required_providers {
+    proxmox = {
+      source  = "ondrejsika/proxmox"
+      version = "2020.9.21"
+    }
+  }
 }
 
 provider "proxmox" {

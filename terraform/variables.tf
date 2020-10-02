@@ -1,30 +1,36 @@
 variable "gateways" {
-  type = map(list(map(string)))
+  type = map(any)
   default = {
-    gateway1 = [
-      {
-        cidr   = "10.0.0.1/24"
-        name   = "eth0"
-        gw     = ""
-        hwaddr = "06:08:72:DD:89:B4"
-        ip     = "10.0.0.1"
-      },
-      {
-        cidr   = "163.172.118.179/32"
-        name   = "eth1"
-        gw     = "62.210.0.1"
-        hwaddr = "52:54:00:00:bc:0b"
-      }
-    ],
-    gateway2 = [
-      {
-        cidr   = "10.0.0.2/24"
-        name   = "eth0"
-        gw     = "10.0.0.1"
-        hwaddr = "E6:48:8F:0C:D0:57"
-        ip     = "10.0.0.2"
-      }
-    ]
+    gateway1 = {
+      id   = 101
+      disk = 16
+      network = [
+        {
+          cidr   = "10.0.0.1/24"
+          name   = "eth0"
+          gw     = ""
+          hwaddr = "06:08:72:DD:89:B4"
+          ip     = "10.0.0.1"
+        },
+        {
+          cidr   = "163.172.118.179/32"
+          name   = "eth1"
+          gw     = "62.210.0.1"
+          hwaddr = "52:54:00:00:bc:0b"
+        }
+    ] },
+    gateway2 = {
+      id   = 102
+      disk = 16
+      network = [
+        {
+          cidr   = "10.0.0.2/24"
+          name   = "eth0"
+          gw     = "10.0.0.1"
+          hwaddr = "E6:48:8F:0C:D0:57"
+          ip     = "10.0.0.2"
+        }
+    ] }
   }
 }
 
@@ -32,6 +38,7 @@ variable "masters" {
   type = map(map(string))
   default = {
     kube-master1 = {
+      id      = 201
       cidr    = "10.0.0.11/24"
       cores   = 2
       gw      = "10.0.0.1"
@@ -41,6 +48,7 @@ variable "masters" {
       disk    = "40G"
     },
     kube-master2 = {
+      id      = 202
       cidr    = "10.0.0.12/24"
       cores   = 2
       gw      = "10.0.0.1"
@@ -50,6 +58,7 @@ variable "masters" {
       disk    = "40G"
     },
     kube-master3 = {
+      id      = 203
       cidr    = "10.0.0.13/24"
       cores   = 2
       gw      = "10.0.0.1"
@@ -65,6 +74,7 @@ variable "workers" {
   type = map(map(string))
   default = {
     kube-worker1 = {
+      id      = 301
       cidr    = "10.0.0.21/24"
       cores   = 2
       gw      = "10.0.0.1"
@@ -74,6 +84,7 @@ variable "workers" {
       disk    = "80G"
     },
     kube-worker2 = {
+      id      = 302
       cidr    = "10.0.0.22/24"
       cores   = 2
       gw      = "10.0.0.1"
@@ -83,6 +94,7 @@ variable "workers" {
       disk    = "80G"
     },
     kube-worker3 = {
+      id      = 303
       cidr    = "10.0.0.23/24"
       cores   = 2
       gw      = "10.0.0.1"
