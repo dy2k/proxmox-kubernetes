@@ -1,5 +1,5 @@
 
-# Proxmox Kubernetes
+# Kubernetes on Proxmox
 
 Using Terraform and Ansible to provision Proxmox VMs and configure a highly available Kubernetes cluster with co-located control plane nodes and etcd members.
 
