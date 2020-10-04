@@ -5,10 +5,10 @@ Using Terraform and Ansible to provision Proxmox VMs and configure a highly avai
 
 ## Features
 
-- Two `gateway` LXC machines for the DNS servers and the load balancers of kube-apiserver
+- Two `gateways` LXC machines for the DNS servers and the load balancers of kube-apiserver
 - Three `masters` QEMU VM machines for the Kubernetes control-plane nodes
 - Three `workers` QEMU VM machines for the Kubernetes worker nodes
-- Setup NAT gateway with the assigned public IP on the first `gateway` machine
+- Setup NAT gateway with the assigned public IP on the first `gateways` machine
 - Disable swap and ensure iptables see bridged traffic for `masters` and `workers`
 - Install QEMU guest agent, setup timezone, disable SSH password and IPv6
 - Setup SSH key, configure root password and use `terraform` as default sudo user
@@ -40,7 +40,9 @@ openssl rand -base64 24
 ssh-keygen -t rsa -b 4096 -N "" -C "$USERNAME@$DOMAIN" -m pem -f "$PRIVATE_KEY"
 ```
 
-For the full list of required passwords and SSH keys, you may refer to the below sample configuration. `ssh_key` is the key used by Terraform and Ansible to login to the bastion host to execute the tasks, while `terraform_key` is used in key exchange of the default sudo user among all provisioned hosts. Make sure the bastion host has the terraform user and `terraform_key` authorized with `ssh_key`. Otherwise, use the first gateway host as the bastion host and configure the public IP in your DNS service provider. You also need to ensure the `ssh_key` is your default key in `~/.ssh/id_rsa` or specify the location in the SSH command of `ansible/group_vars/*.yml`.
+For the full list of required passwords and SSH keys, you may refer to the below sample configuration.
+
+`ssh_key` is the key used by Terraform and Ansible to login to the bastion host to execute the tasks, while `terraform_key` is used in key exchange of the default sudo user among all provisioned hosts.
 
 ```yaml
 pm_api_url: https://proxmox.dy2k.io:8006/api2/json
@@ -55,6 +57,8 @@ terraform_key: |
   -----BEGIN RSA PRIVATE KEY-----
   -----END RSA PRIVATE KEY-----
 ```
+
+Make sure the bastion host has the terraform user and `terraform_key` authorized with `ssh_key`. Otherwise, use the first gateway host as the bastion host and configure the public IP in your DNS service provider. You also need to ensure the `ssh_key` is your default key in `~/.ssh/id_rsa` or specify the location in the SSH command of `ansible/group_vars/*.yml`.
 
 ## Get Started
 
