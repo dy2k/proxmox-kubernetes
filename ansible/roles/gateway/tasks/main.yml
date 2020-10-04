@@ -5,6 +5,13 @@
     name: OpenSSH
   when: inventory_hostname == groups["gateways"][0]
 
+- name: Allow Kubernetes API in ufw
+  ufw:
+    rule: allow
+    port: "6443"
+  notify:
+    - Restart ufw
+
 - name: Enable UFW
   ufw:
     state: enabled
@@ -30,13 +37,15 @@
   notify:
     - Restart ufw
 
-- name: Add NAT to ufw
+- name: Add NAT and port forwarding to ufw
   blockinfile:
     path: /etc/ufw/before.rules
     block: |
       # NAT table rules
       *nat
       :POSTROUTING ACCEPT [0:0]
+      # Port Forwardings
+      -A PREROUTING -i {{ nat_interface }} -p tcp --dport 6443 -j DNAT --to-destination 10.0.0.10
       # Forward traffic through out-interface - Change to match yours
       -A POSTROUTING -s {{ nat_cidr }} -o {{ nat_interface }} -j MASQUERADE
       # don't delete the 'COMMIT' line or these nat table rules won't

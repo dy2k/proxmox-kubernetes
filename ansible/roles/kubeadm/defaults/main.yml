@@ -1,7 +1,7 @@
 ---
 kubeadm_version: 1.19.2-00
 kubeadm_apt_key_id: 6A030B21BA07F4FB
-kubeadm_load_balancer_dns: kube-cluster1
+kubeadm_load_balancer_dns: kube-cluster1.sd-51798.dy2k.io
 kubeadm_load_balancer_port: 6443
 kubeadm_pod_network_cidr: 10.244.0.0/16
 kubeadm_cni_plugins:
