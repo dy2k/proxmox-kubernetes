@@ -2,9 +2,9 @@ resource "proxmox_vm_qemu" "kube-worker" {
   for_each = var.workers
 
   name        = each.key
-  target_node = "sd-51798"
+  target_node = var.common.target_node
   agent       = 1
-  clone       = "ci-ubuntu-template"
+  clone       = var.common.clone
   vmid        = each.value.id
   memory      = each.value.memory
   cores       = each.value.cores
@@ -30,14 +30,15 @@ resource "proxmox_vm_qemu" "kube-worker" {
     id   = 0
     type = "socket"
   }
-  bootdisk     = "scsi0"
-  scsihw       = "virtio-scsi-pci"
-  os_type      = "cloud-init"
-  ipconfig0    = "ip=${each.value.cidr},gw=${each.value.gw}"
-  ciuser       = "terraform"
-  cipassword   = yamldecode(data.local_file.secrets.content).user_password
-  searchdomain = "sd-51798.dy2k.io"
-  nameserver   = "10.0.0.1"
+  bootdisk   = "scsi0"
+  scsihw     = "virtio-scsi-pci"
+  os_type    = "cloud-init"
+  ipconfig0  = "ip=${each.value.cidr},gw=${each.value.gw}"
+  ciuser     = "terraform"
+  cipassword = yamldecode(data.local_file.secrets.content).user_password # comment after creation
+  # cipassword   = "**********" # un-comment after creation
+  searchdomain = var.common.search_domain
+  nameserver   = var.common.nameserver
   sshkeys = join("", [
     data.tls_public_key.dy2k.public_key_openssh,
     data.tls_public_key.ubuntu_terraform.public_key_openssh
@@ -51,7 +52,7 @@ resource "proxmox_vm_qemu" "kube-worker" {
     host                = each.value.ip
     user                = "terraform"
     private_key         = data.tls_public_key.ubuntu_terraform.private_key_pem
-    bastion_host        = "ubuntu.dy2k.io"
+    bastion_host        = var.common.bastion_host
     bastion_private_key = data.tls_public_key.dy2k.private_key_pem
   }
 

@@ -1,9 +1,24 @@
+variable "common" {
+  type = map(string)
+  default = {
+    bastion_host  = "ubuntu.dy2k.io"
+    os_template   = "local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz"
+    os_type       = "ubuntu"
+    clone         = "ci-ubuntu-template"
+    search_domain = "sd-51798.dy2k.io"
+    target_node   = "sd-51798"
+    nameserver    = "10.0.0.1"
+  }
+}
+
 variable "gateways" {
   type = map(any)
   default = {
     gateway1 = {
-      id   = 101
-      disk = 16
+      id     = 101
+      cores  = 2
+      memory = 2048
+      disk   = 16
       network = [
         {
           cidr   = "10.0.0.1/24"
@@ -20,8 +35,10 @@ variable "gateways" {
         }
     ] },
     gateway2 = {
-      id   = 102
-      disk = 16
+      id     = 102
+      cores  = 2
+      memory = 2048
+      disk   = 16
       network = [
         {
           cidr   = "10.0.0.2/24"

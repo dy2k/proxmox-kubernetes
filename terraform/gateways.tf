@@ -1,12 +1,12 @@
 resource "proxmox_lxc" "gateway" {
   for_each = var.gateways
 
-  ostemplate = "local:vztmpl/ubuntu-20.04-standard_20.04-1_amd64.tar.gz" # comment after creation
-  ostype     = "ubuntu"
-  cores      = 2
+  ostemplate = var.common.os_template # comment after creation
+  ostype     = var.common.os_type
+  cores      = each.value.cores
   hostname   = each.key
   vmid       = each.value.id
-  memory     = 2048
+  memory     = each.value.memory
   dynamic "network" {
     for_each = each.value.network
 
@@ -26,21 +26,21 @@ resource "proxmox_lxc" "gateway" {
   onboot   = true
   password = yamldecode(data.local_file.secrets.content).root_password # comment after creation
   rootfs   = "local:${each.value.disk},size=${each.value.disk}G"       # comment after creation
-  # rootfs   = "local:${each.value.id}/vm-${each.value.id}-disk-0.raw,size=${each.value.disk}G" # un-comment after creation
-  searchdomain = "sd-51798.dy2k.io"
+  # rootfs       = "local:${each.value.id}/vm-${each.value.id}-disk-0.raw,size=${each.value.disk}G" # un-comment after creation
+  searchdomain = var.common.search_domain
   ssh_public_keys = join("", [                              # comment after creation
     data.tls_public_key.dy2k.public_key_openssh,            # comment after creation
     data.tls_public_key.ubuntu_terraform.public_key_openssh # comment after creation
   ])                                                        # comment after creation
   start = true                                              # comment after creation
-  #   start        = false # un-comment after creation
+  # start        = false # un-comment after creation
   unprivileged = true
-  target_node  = "sd-51798"
+  target_node  = var.common.target_node
 
   connection {
     host                = each.value.network[0].ip
     private_key         = data.tls_public_key.ubuntu_terraform.private_key_pem
-    bastion_host        = "ubuntu.dy2k.io"
+    bastion_host        = var.common.bastion_host
     bastion_private_key = data.tls_public_key.dy2k.private_key_pem
   }
 
